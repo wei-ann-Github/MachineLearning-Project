@@ -1,0 +1,22 @@
+---
+title: "Practical Machine Learning Project"
+author: "Lim, Wei Ann"
+date: "Saturday, June 06, 2015"
+output: html_document
+---
+
+The data set can be found in the following location:
+
+Training data: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv  
+Testing data: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+```{r, cache = TRUE, echo=FALSE}
+getwd()
+train <- read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
+test <- read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")
+names(train)
+
+# Performaing EDA
+library(caret)
+featurePlot(x = train[, -c(1, 2, 160)])
+```
