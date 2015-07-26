@@ -1,0 +1,101 @@
+---
+title: "Quantifing Quality of Exercise"
+author: "Wei Ann Lim"
+date: "24 July 2015"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE, fig.align='center')
+```
+# Executive Summary
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely qualify that activity.   
+
+Data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants were collected while they were performing barbell lifts correctly and incorrectly in 5 different ways. Accelerometers data are then labelled as A, B, C, D or E to represent the quality of lifts performed. The quality of the lifts associated with each rows of data are stored in the variable **classe**.  
+
+This write up describes how a model was built to allow prediction of the quality of barbell lift performed based on accelerometer data.  
+
+The data for building the model comes from http://groupware.les.inf.puc-rio.br/har, and they are available here https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv  
+
+# Building the model  
+```{r, echo = FALSE, cache=TRUE, warning=FALSE, message=FALSE}
+library(beepr)
+library(caret)
+library(ggplot2)
+
+train <- read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", na.string = c("", "#DIV/0!", "NA"))
+train_dim <- dim(train)
+```
+## Data Preparation
+
+Before building the model, Exploratory Data Analysis and data cleaning is done.  
+
+```{r}
+names(train)
+```
+
+The first 7 variables, i.e. `r names(train)[1:7]`,  are not sensor data. They will be remove from the analysis.  
+
+```{r}
+train <- train[, -(1:7)]
+```
+
+Now, let's look at how complete each column of data is.  
+
+```{r}
+# For each variable, calculate the percentage of NA values
+naFrac <- apply(train, 2, function(x) {sum(is.na(x))/length(x)})
+qplot(naFrac, geom = "histogram")
+```
+
+It was found that some variables consist of more than 90% NA values, while other variables have no NA values. Variables with more than 90% NA values, will not be useful for prediction, hence they will be removed from the dataset.  
+
+```{r}
+# Keep Variables with less than 90% NA values
+train <- train[, naFrac < 0.9]
+```
+
+Highly correlated variables are also removed from the analysis. High correlated variables are found using the **findCorrelation()** function.  
+
+First, find the correlation between each variables.  
+
+```{r correlations}
+corelation_mat <- cor(train[, -53]) # column 53 is where the "classe" variable is stored
+
+# Set variable correlation with itself equal to 0
+diag(corelation_mat) <- 0
+```
+
+Find variables with correlation > 0.75 and remove them.  
+
+```{r findCorrelations}
+# Cut off variables with corelation > 0.75
+# Use the **findCorrelation** function
+highlyCor <- findCorrelation(corelation_mat, 0.75)
+
+# create a data.frame where the highly correlated variables are removed
+train_sub <- train[, -highlyCor]
+```
+
+After these variables are removed, a **Random Forest** model is built with the remaining variables.  
+
+## Random Forest  
+
+To estimate the test error, I used 5 fold cross validation. We set the parameters of the cross validation in the **trainControl()** function.  
+
+```{r trainControl}
+cvCtrl <- trainControl(method = "cv", number = 5)
+```
+
+Usually, the model will be more accurate when we increase the number of cross validation folds and the number of repeats. However, a bias-variance trade off is needed, so the number of folds cannot be infinitely large. Computing power also limits that number of folds. The default 5 folds is an appropriate compromise. Computing power also limits that number of folds.    
+
+With the **trainControl()** setup, I will train the model.  
+
+```{r training}
+set.seed(2706)
+rfFitCV <- train(classe ~ .,  data = train_sub, method = "rf", importance = TRUE, trControl = cvCtrl, allowParallel = TRUE)   
+
+rfFitCV
+```
+
+The expected out of sample error is `r round(max(rfFitCV$results$Accuracy), 3)`, when the mtry is `r rfFitCV$results[rfFitCV$results$Accuracy == max(rfFitCV$results$Accuracy), 1]`.  
