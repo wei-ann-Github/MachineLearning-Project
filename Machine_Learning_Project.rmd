@@ -2,7 +2,7 @@
 title: "Quantifing Quality of Exercise"
 author: "Wei Ann Lim"
 date: "24 July 2015"
-output: html_document
+output: pdf_document
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(cache=TRUE, fig.align='center')
