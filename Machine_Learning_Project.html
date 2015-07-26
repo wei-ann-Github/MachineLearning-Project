@@ -193,9 +193,11 @@ train_sub &lt;- train[, -highlyCor]</code></pre>
 <p>Usually, the model will be more accurate when we increase the number of cross validation folds and the number of repeats. However, a bias-variance trade off is needed, so the number of folds cannot be infinitely large. Computing power also limits that number of folds. The default 5 folds is an appropriate compromise. Computing power also limits that number of folds.</p>
 <p>With the <strong>trainControl()</strong> setup, I will train the model.</p>
 <pre class="r"><code>set.seed(2706)
-rfFitCV &lt;- train(classe ~ .,  data = train_sub, method = &quot;rf&quot;, importance = TRUE, trControl = cvCtrl, allowParallel = TRUE)   
-
-rfFitCV</code></pre>
+rfFitCV &lt;- train(classe ~ .,  data = train_sub, method = &quot;rf&quot;, importance = TRUE, trControl = cvCtrl, allowParallel = TRUE)   </code></pre>
+<pre><code>## Loading required package: randomForest
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<pre class="r"><code>rfFitCV</code></pre>
 <pre><code>## Random Forest 
 ## 
 ## 19622 samples
